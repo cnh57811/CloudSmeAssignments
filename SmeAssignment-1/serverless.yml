@@ -1,0 +1,56 @@
+service: smeassignment-1
+app: sme-assignments
+org: cheinz
+
+provider:
+  name: aws
+  stage: dev
+  region: us-east-1
+  runtime: nodejs10.x
+
+custom:
+  stage: "${opt:stage, self:provider.stage}"
+  flightAlertTableName: "${self:custom.stage}_FLIGHT_ALERTS"
+  flightDetailsTableName: "${self:custom.stage}_FLIGHT_DETAILS"
+
+functions:
+  putFlightDetails:
+    handler: handler_flightDetails.putFlightDetails
+    role: !GetAtt dynamoDbPutFlightDetailsRole.Arn
+    environment:
+      FLIGHT_DETAILS_TABLE_NAME: "${self:custom.flightDetailsTableName}"
+    events:
+      - http:
+          path: flightDetails
+          method: put
+          request:
+            schema:
+              application/json: ${file(./models/putFlightDetailsRequestSchema.json)}
+
+  postFlightAlert:
+    handler: handler_flightAlerts.postFlightAlert
+    role: !GetAtt dynamoDbPostFlightAlertRole.Arn
+    environment:
+      FLIGHT_ALERT_TABLE_NAME: "${self:custom.flightAlertTableName}"
+    events:
+      - http:
+          path: flightAlert
+          method: post
+          request:
+            schema:
+              application/json: ${file(./models/putFlightAlertsRequestSchema.json)}
+
+  sendNotification:
+    handler: handler_notifications.sendNotification
+    role: !GetAtt sendNotification.Arn
+    environment:
+      FLIGHT_DETAILS_TABLE_NAME: "${self:custom.flightDetailsTableName}"
+    events:
+      - stream:
+          type: dynamodb
+          arn: !GetAtt flightAlertTable.StreamArn
+
+resources:
+  - ${file(resources/dynamodb.yml)}
+  - ${file(resources/iam-roles.yml)}
+  - ${file(resources/iam-policies.yml)}

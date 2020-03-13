@@ -1,0 +1,38 @@
+Resources:
+  dynamoDbPutFlightDetailsPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - dynamodb:PutItem
+            Resource: !GetAtt flightDetailsTable.Arn
+            
+  dynamoDbPutFlightAlertPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - dynamodb:PutItem
+            Resource: !GetAtt flightAlertTable.Arn
+
+  dynamoDbScanFlightDetailsPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - dynamodb:Scan
+            Resource: !GetAtt flightDetailsTable.Arn
+          - Effect: Allow
+            Action:
+              - sns:Publish
+            Resource: 
+              - "*"
